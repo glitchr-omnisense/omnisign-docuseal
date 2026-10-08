@@ -1,0 +1,83 @@
+{
+    "id": 2,
+    "name": null,
+    "slug": "LPKKeroKnBfHNk",
+    "source": "api",
+    "submitters_order": "random",
+    "expire_at": null,
+    "created_at": "2026-10-08T01:14:25.669Z",
+    "updated_at": "2026-10-08T01:14:26.237Z",
+    "archived_at": null,
+    "submitters": [
+        {
+            "id": 2,
+            "slug": "RKDjxDp8cpxaBA",
+            "uuid": "5a510239-d424-4557-83ed-ddb742990894",
+            "name": "Camille \u00c9rable",
+            "email": "camille@erable.example",
+            "phone": null,
+            "completed_at": "2026-10-08T01:14:25.812Z",
+            "declined_at": null,
+            "external_id": "tenant",
+            "submission_id": 2,
+            "metadata": {},
+            "opened_at": null,
+            "sent_at": null,
+            "created_at": "2026-10-08T01:14:25.681Z",
+            "updated_at": "2026-10-08T01:14:25.819Z",
+            "status": "completed",
+            "application_key": "tenant",
+            "values": [
+                {
+                    "field": "Signature",
+                    "value": "http://localhost:13300/file/WyJhZDk4OTRjOS1mNzA2LTQ4YTktYTBiNy04MTRlOTExYjE4ZTYiLCJibG9iIiwxNzkxNDI0NDc5XQ--c845822328f4fc087fda3b3b275486c89575fc94377041004142bc122ea63136/signature.png"
+                }
+            ],
+            "documents": [
+                {
+                    "name": "lease",
+                    "url": "http://localhost:13300/file/WyJiNWQ0ODJhZi0xNGNmLTQ0MjctOTEzZi1lOTAyYzBjYWEzMjgiLCJibG9iIiwxNzkxNDI0NDc5XQ--520673a40034ca97fcfca89d153106d1e75132f289792c5e09308b4658376ab4/lease.pdf"
+                }
+            ],
+            "preferences": {
+                "send_email": false,
+                "send_sms": false
+            },
+            "role": "First Party"
+        }
+    ],
+    "template": {
+        "id": 1,
+        "name": "lease",
+        "external_id": null,
+        "created_at": "2026-10-08T01:13:37.168Z",
+        "updated_at": "2026-10-08T01:13:48.782Z",
+        "folder_name": "Default"
+    },
+    "created_by_user": {
+        "id": 1,
+        "email": "harness@omnisign.example",
+        "first_name": "Marco",
+        "last_name": "Meyer"
+    },
+    "variables": {},
+    "submission_events": [
+        {
+            "id": 2,
+            "submitter_id": 2,
+            "event_type": "api_complete_form",
+            "event_timestamp": "2026-10-08T01:14:25.823Z",
+            "data": {}
+        }
+    ],
+    "documents": [
+        {
+            "name": "lease",
+            "url": "http://localhost:13300/file/WyJiNWQ0ODJhZi0xNGNmLTQ0MjctOTEzZi1lOTAyYzBjYWEzMjgiLCJibG9iIiwxNzkxNDI0NDc5XQ--520673a40034ca97fcfca89d153106d1e75132f289792c5e09308b4658376ab4/lease.pdf"
+        }
+    ],
+    "audit_log_url": "http://localhost:13300/file/WyJlMGMwNjUyMC03NDM2LTQzYzYtOWJiZi0zYjAwZDhjNmEyNDUiLCJibG9iIiwxNzkxNDI0NDc5XQ--4d7deb0dfab8898d163ca67f06e6350be346b925cc466f373e7e30e08e216d46/Audit%20Log%20-%20lease.pdf",
+    "combined_document_url": null,
+    "status": "completed",
+    "completed_at": "2026-10-08T01:14:25.812Z"
+}

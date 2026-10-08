@@ -1,0 +1,60 @@
+{
+    "id": 3,
+    "name": null,
+    "slug": "djmf38ACDuywgR",
+    "source": "api",
+    "submitters_order": "random",
+    "expire_at": null,
+    "created_at": "2026-10-08T01:14:29.057Z",
+    "updated_at": "2026-10-08T01:14:29.073Z",
+    "archived_at": "2026-10-08T01:14:29.073Z",
+    "submitters": [
+        {
+            "id": 3,
+            "slug": "fGyfdrQtXLPiKr",
+            "uuid": "5a510239-d424-4557-83ed-ddb742990894",
+            "name": "Dominique H\u00eatre",
+            "email": "dominique@hetre.example",
+            "phone": null,
+            "completed_at": null,
+            "declined_at": null,
+            "external_id": "tenant",
+            "submission_id": 3,
+            "metadata": {},
+            "opened_at": null,
+            "sent_at": null,
+            "created_at": "2026-10-08T01:14:29.060Z",
+            "updated_at": "2026-10-08T01:14:29.060Z",
+            "status": "awaiting",
+            "application_key": "tenant",
+            "values": [],
+            "documents": [],
+            "preferences": {
+                "send_email": false,
+                "send_sms": false
+            },
+            "role": "First Party"
+        }
+    ],
+    "template": {
+        "id": 1,
+        "name": "lease",
+        "external_id": null,
+        "created_at": "2026-10-08T01:13:37.168Z",
+        "updated_at": "2026-10-08T01:13:48.782Z",
+        "folder_name": "Default"
+    },
+    "created_by_user": {
+        "id": 1,
+        "email": "harness@omnisign.example",
+        "first_name": "Marco",
+        "last_name": "Meyer"
+    },
+    "variables": {},
+    "submission_events": [],
+    "documents": [],
+    "audit_log_url": null,
+    "combined_document_url": null,
+    "status": "pending",
+    "completed_at": null
+}
