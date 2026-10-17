@@ -11,7 +11,7 @@ order: 1
 composer require omnisign/docuseal
 ```
 
-PHP 8.2 or later, `glitchr/omnisign` and `symfony/http-client`. A DocuSeal instance and its API key
+PHP 8.2 or later, `omniscient/omnisign` and `symfony/http-client`. A DocuSeal instance and its API key
 (Settings > API) - or DocuSeal's cloud.
 
 ```sh
