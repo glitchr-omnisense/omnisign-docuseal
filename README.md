@@ -1,6 +1,6 @@
 # omnisign/docuseal
 
-**DocuSeal** for [omniscient/omnisign](https://github.com/glitchr-studio/omnisign): documents signed on
+**DocuSeal** for [omnisense/omnisign](https://github.com/glitchr-omnisense/omnisign): documents signed on
 an instance of one's own - [open source](https://github.com/docusealco/docuseal) (AGPL-3.0), run in
 a container: nothing leaves for a third party - or on DocuSeal's cloud.
 
