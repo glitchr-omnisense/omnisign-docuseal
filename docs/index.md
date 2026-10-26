@@ -1,9 +1,10 @@
----
-title: omnisign/docuseal
-order: 1
----
-
 # omnisign/docuseal
+
+DocuSeal for [omnisense/omnisign](https://github.com/glitchr-omnisense/omnisign): an instance of
+one's own - [open source](https://github.com/docusealco/docuseal), nothing leaves for a third
+party - or DocuSeal's cloud (`https://api.docuseal.com`, `https://api.docuseal.eu`). Simple
+signatures, by e-mail or in the application's page, from a template of the instance's or from the
+envelope's PDFs. Every call carries the API key as `X-Auth-Token`; JSON both ways.
 
 ## Installation
 
@@ -25,6 +26,11 @@ and the open-source code itself ([docusealco/docuseal](https://github.com/docuse
 `config/routes.rb`, `app/controllers/api/*`, `lib/submissions/serialize_for_api.rb`,
 `lib/webhook_urls/signatures.rb`) - which says what the open-source edition has: no
 `/submissions/pdf`, a signature on webhooks.
+
+## Credentials
+
+- The instance's (or the cloud account's) **API key**: Settings, API.
+- For webhooks, a webhook created in the instance's settings, and its **secret** (`whsec_...`).
 
 ## Options
 
@@ -57,6 +63,59 @@ reads the submission back.
 
 Simple signatures only.
 
+## Capabilities
+
+| Request | Supported |
+|---|---|
+| `Create` | yes: from a template (`POST /submissions`), or from PDFs (`POST /submissions/pdf`: DocuSeal Pro and the cloud; an open-source instance refuses it) |
+| `Send` | reads the submission back: DocuSeal sends at creation |
+| `Fetch`, `Remind`, `Cancel`, `Download`, `SigningUrl` | yes |
+| `Notify` | with `webhook_secret` |
+
+`capabilities()`: simple; in the page; ordered; no identity check; third party only for the cloud
+(or `third_party`); documents; templates. `Signer::$locale` is not sent; `SigningUrl`'s `returnUrl`
+is not read (the envelope's `redirectUrl` is DocuSeal's `completed_redirect_url`); a field's
+`anchor` is not read: fields are placed by page and position (`w` 200 and `h` 60 when not given).
+The signed documents' URLs are fetched with the API key only when they are on the API's own host.
+
+## Example
+
+The [installation script of the manual](https://github.com/glitchr-omnisense/omnisign/blob/1.x/docs/installation.md#plain-php) is this gateway's, run on
+2026-10-08 against an open-source instance in Docker. On the recorded answers, on 2026-10-26, with a
+webhook signed as DocuSeal signs it:
+
+```
+docuseal
+  > POST http://localhost:13300/api/submissions
+  4 sent tenant=4 waiting http://localhost:13300/s/KKjaQ1uucspGL5
+  notify: signed form.completed 4 tenant form.completed@7@2026-10-26T09:00:00Z
+```
+
+In Symfony:
+
+```yaml
+omnisign:
+    gateways:
+        contracts:
+            factory: docuseal
+            options:
+                url: '%env(DOCUSEAL_URL)%'
+                api_key: '%env(DOCUSEAL_API_KEY)%'
+                webhook_secret: '%env(default::DOCUSEAL_WEBHOOK_SECRET)%'
+```
+
+## Errors
+
+| Answer | Exception |
+|---|---|
+| 401, 403 | `InvalidKeyException` (`The API key was refused (HTTP 401): ...`) |
+| other 4xx (an open-source instance's 404 on `/submissions/pdf`) | `ProviderException` (`<METHOD> <path>: HTTP <status>, <error>`) |
+| 5xx, 429, no answer, a timeout (10 s) | `UnreachableException` |
+| a download of a submission not completed | `ProviderException` |
+| a level other than simple; no signer; neither template nor documents; a template signer without a role (but the first) | `InvalidConfigException`, before any call |
+| a signing URL for a signer not created with the envelope | `InvalidConfigException` |
+| a webhook that does not hold | `InvalidNotificationException` |
+
 ## Verified, and not
 
 | | |
@@ -66,3 +125,11 @@ Simple signatures only.
 | `remind()` | accepted by the instance (200); the e-mail not observed - no mail server configured |
 | Webhooks | the signature by the tests, as DocuSeal's code computes it; no callback received from the instance |
 | A signer signing in a browser | not done: completed through the API |
+
+The package's tests (`Tests/DocusealGatewayTest.php`, 6 tests) pass on 2026-10-26 (PHP 8.4).
+
+## Responsibility
+
+This package is an independent, unofficial client: it is not affiliated with, endorsed by or
+sponsored by DocuSeal. Whoever runs it against DocuSeal's cloud complies with
+[docuseal.com/terms](https://www.docuseal.com/terms); see the README's Responsibility section.
