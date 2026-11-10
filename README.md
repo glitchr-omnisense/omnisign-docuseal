@@ -22,6 +22,12 @@ created, signing link, completed, downloaded (signed PDF and audit log), archive
 
 [Documentation](docs/index.md): the options, templates and PDFs, the webhooks, what was verified.
 
+## Usage policy
+
+`policy.json`, read on 2026-11-10 in DocuSeal's [API reference](https://www.docuseal.com/docs/api): no
+limit published, rights unknown. An instance of one's own sets its own limits: declare them as the
+site's `policy`.
+
 ## Responsibility
 
 This package is an independent, unofficial client: it is not affiliated with, endorsed by or

@@ -2,6 +2,7 @@
 
 namespace Omnisign\Docuseal;
 
+use Omnisense\Contracts\Policy\Backoff;
 use Omnisign\Exception\InvalidKeyException;
 use Omnisign\Exception\InvalidNotificationException;
 use Omnisign\Exception\ProviderException;
@@ -31,6 +32,7 @@ final class Api
         #[\SensitiveParameter] private readonly ?string $webhookSecret = null,
         public readonly int $webhookTolerance = 300,
         private readonly ?\Closure $clock = null,
+        private readonly ?Backoff $backoff = null,
     ) {
     }
 
@@ -41,7 +43,7 @@ final class Api
      */
     public function json(string $method, string $path, array $json = []): array
     {
-        $answer = Answer::send($this->http, self::PROVIDER, $method, $this->url.$path, ['headers' => ['X-Auth-Token' => $this->apiKey]] + ($json ? ['json' => $json] : []));
+        $answer = Answer::send($this->http, self::PROVIDER, $method, $this->url.$path, ['headers' => ['X-Auth-Token' => $this->apiKey]] + ($json ? ['json' => $json] : []), $this->backoff);
         if (\in_array($answer->status, [401, 403], true)) {
             throw new InvalidKeyException(self::PROVIDER, \sprintf('The API key was refused (HTTP %d): %s', $answer->status, self::error($answer)), (string) $answer->status);
         }
@@ -56,7 +58,7 @@ final class Api
     public function fetchFile(string $url): string
     {
         $same = parse_url($url, \PHP_URL_HOST) === parse_url($this->url, \PHP_URL_HOST);
-        $answer = Answer::send($this->http, self::PROVIDER, 'GET', $url, $same ? ['headers' => ['X-Auth-Token' => $this->apiKey]] : []);
+        $answer = Answer::send($this->http, self::PROVIDER, 'GET', $url, $same ? ['headers' => ['X-Auth-Token' => $this->apiKey]] : [], $this->backoff);
         if ($answer->status >= 400) {
             throw new ProviderException(self::PROVIDER, \sprintf('GET %s: HTTP %d', strtok($url, '?'), $answer->status), (string) $answer->status);
         }

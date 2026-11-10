@@ -1,0 +1,27 @@
+{
+    "$schema": "https://github.com/glitchr-omnisense/contracts/blob/1.x/resources/usage-policy.schema.json",
+    "provider": "docuseal",
+    "rateLimits": null,
+    "rights": {
+        "commercial": "unknown",
+        "openSourceRequired": null,
+        "caching": {
+            "permission": "unknown"
+        },
+        "storage": "unknown",
+        "redistribution": "unknown",
+        "attribution": {
+            "required": false
+        }
+    },
+    "requirements": {
+        "key": true
+    },
+    "provenance": {
+        "terms": "https://www.docuseal.com/terms",
+        "policy": "https://www.docuseal.com/docs/api",
+        "notes": "DocuSeal's API reference states no rate limit nor quota, for its cloud (api.docuseal.com, api.docuseal.eu) or an instance of one's own: limits unknown. A self-hosted instance (AGPL-3.0 software) has no provider in between: whoever runs it sets its limits, and a site declares them as its tightening. On DocuSeal's cloud the terms of service and the plan decide commercial use, storage and redistribution; they were not read here: unknown.",
+        "verifiedAt": "2026-11-10",
+        "declaredBy": "maintainer"
+    }
+}

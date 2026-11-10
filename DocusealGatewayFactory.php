@@ -2,6 +2,7 @@
 
 namespace Omnisign\Docuseal;
 
+use Omnisense\Contracts\Policy\UsagePolicy;
 use Omnisign\Config;
 use Omnisign\Docuseal\Action\CancelAction;
 use Omnisign\Docuseal\Action\CreateAction;
@@ -31,8 +32,16 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class DocusealGatewayFactory extends GatewayFactory
 {
+    private static ?UsagePolicy $policy = null;
+
     public function __construct(private readonly ?HttpClientInterface $http = null)
     {
+    }
+
+    /** Its usage policy, as policy.json declares it (read once). */
+    public static function usagePolicy(): UsagePolicy
+    {
+        return self::$policy ??= UsagePolicy::fromFile(__DIR__.'/policy.json');
     }
 
     protected function populateConfig(Config $config): void
@@ -53,12 +62,13 @@ final class DocusealGatewayFactory extends GatewayFactory
                 thirdParty: null !== $c->get('third_party') && '' !== $c->get('third_party') ? $c->bool('third_party') : (bool) preg_match('~(^|\.)docuseal\.(com|eu|co)$~', (string) parse_url((string) $c['url'], \PHP_URL_HOST)),
                 documents: true,
                 templates: true,
+                policy: self::usagePolicy(),
             ),
             'omnisign.api' => function (Config $c): Api {
                 $url = rtrim((string) $c['url'], '/');
                 $app = $c->get('app_url') ?: (preg_match('~^https://api\.(docuseal\.(?:com|eu))$~', $url, $m) ? 'https://'.$m[1] : preg_replace('~/api$~', '', $url));
 
-                return new Api($this->http ?? HttpClient::create(), (string) $c['api_key'], $url, rtrim((string) $app, '/'), $c->get('webhook_secret') ?: null, (int) $c['webhook_tolerance']);
+                return new Api($this->http ?? HttpClient::create(), (string) $c['api_key'], $url, rtrim((string) $app, '/'), $c->get('webhook_secret') ?: null, (int) $c['webhook_tolerance'], backoff: $c->backoff());
             },
             'omnisign.action.create' => new CreateAction(),
             'omnisign.action.send' => new SendAction(),
