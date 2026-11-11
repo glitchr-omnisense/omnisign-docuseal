@@ -33,7 +33,10 @@ final class CreateAction extends AbstractAction
         if (!$envelope->signers) {
             throw new InvalidConfigException('A DocuSeal submission needs a signer at least.');
         }
-        $signers = array_values($envelope->signers);
+        $signers = [];
+        foreach ($envelope->signers as $signer) {
+            $signers[] = $signer;
+        }
         $common = array_filter([
             'send_email' => !$envelope->embedded,
             'order' => $envelope->ordered ? 'preserved' : 'random',
@@ -51,11 +54,14 @@ final class CreateAction extends AbstractAction
             if (!$envelope->documents) {
                 throw new InvalidConfigException('A DocuSeal submission is made from a template (Envelope::$template) or from documents.');
             }
-            $documents = array_map(fn ($d) => [
-                'name' => pathinfo($d->file->filename, \PATHINFO_FILENAME),
-                'file' => base64_encode($d->file->content),
-                'fields' => array_map(fn (Field $f) => $this->field($f), array_values(array_filter($envelope->fields, static fn (Field $f) => $f->document === $d->key))),
-            ], array_values($envelope->documents));
+            $documents = [];
+            foreach ($envelope->documents as $d) {
+                $documents[] = [
+                    'name' => pathinfo($d->file->filename, \PATHINFO_FILENAME),
+                    'file' => base64_encode($d->file->content),
+                    'fields' => array_map(fn (Field $f) => $this->field($f), array_values(array_filter($envelope->fields, static fn (Field $f) => $f->document === $d->key))),
+                ];
+            }
             $answer = $this->api->json('POST', '/submissions/pdf', ['name' => $envelope->title, 'documents' => $documents, 'submitters' => array_map(fn (Signer $s) => $this->submitter($s, $envelope->embedded, $s->role ?? $s->key), $signers)] + $common);
         }
 

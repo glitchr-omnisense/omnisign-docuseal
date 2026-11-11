@@ -31,6 +31,7 @@ final class Api
         public readonly string $appUrl,
         #[\SensitiveParameter] private readonly ?string $webhookSecret = null,
         public readonly int $webhookTolerance = 300,
+        /** @var (\Closure(): int)|null */
         private readonly ?\Closure $clock = null,
         private readonly ?Backoff $backoff = null,
     ) {
@@ -91,7 +92,7 @@ final class Api
         }
         $data = json_decode($body, true);
 
-        return \is_array($data) ? $data : throw new InvalidNotificationException(self::PROVIDER, 'The callback is not JSON.');
+        return \is_array($data) ? Data::map($data) : throw new InvalidNotificationException(self::PROVIDER, 'The callback is not JSON.');
     }
 
     private static function error(Answer $answer): string
@@ -99,7 +100,7 @@ final class Api
         $error = json_decode($answer->body, true);
 
         if (\is_array($error) && (isset($error['error']) || isset($error['message']))) {
-            return (string) ($error['error'] ?? $error['message']);
+            return Data::of($error)->textOrNull('error') ?? Data::of($error)->text('message');
         }
 
         return mb_substr(trim($answer->body), 0, 200) ?: 'no detail';

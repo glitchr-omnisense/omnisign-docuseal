@@ -2,6 +2,7 @@
 
 namespace Omnisign\Docuseal\Action;
 
+use Omnisign\Docuseal\Data;
 use Omnisign\Exception\ProviderException;
 use Omnisign\Model\Download;
 use Omnisign\Model\File;
@@ -24,13 +25,14 @@ final class DownloadAction extends AbstractAction
         \assert($request instanceof DownloadRequest);
         $submission = $this->api->json('GET', '/submissions/'.$request->envelope->reference());
         if ('completed' !== ($submission['status'] ?? null)) {
-            throw new ProviderException('docuseal', \sprintf('The submission is %s: its signed documents come once it is completed.', $submission['status'] ?? 'not readable'));
+            throw new ProviderException('docuseal', \sprintf('The submission is %s: its signed documents come once it is completed.', Data::of($submission)->textOrNull('status') ?? 'not readable'));
         }
         $documents = [];
         foreach ((array) ($submission['documents'] ?? []) as $document) {
-            $name = (string) ($document['name'] ?? 'signed');
-            $documents[] = new File($this->api->fetchFile((string) $document['url']), str_ends_with(strtolower($name), '.pdf') ? $name : $name.'.pdf');
+            $document = Data::of($document);
+            $name = $document->textOrNull('name') ?? 'signed';
+            $documents[] = new File($this->api->fetchFile($document->text('url')), str_ends_with(strtolower($name), '.pdf') ? $name : $name.'.pdf');
         }
-        $request->setResult(new Download($documents, isset($submission['audit_log_url']) ? new File($this->api->fetchFile((string) $submission['audit_log_url']), 'audit-log.pdf') : null));
+        $request->setResult(new Download($documents, isset($submission['audit_log_url']) ? new File($this->api->fetchFile(Data::of($submission)->text('audit_log_url')), 'audit-log.pdf') : null));
     }
 }

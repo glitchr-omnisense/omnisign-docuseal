@@ -2,6 +2,7 @@
 
 namespace Omnisign\Docuseal\Action;
 
+use Omnisign\Docuseal\Data;
 use Omnisign\Model\Event;
 use Omnisign\Model\Notification;
 use Omnisign\Request\Notify;
@@ -25,16 +26,17 @@ final class NotifyAction extends AbstractAction
     {
         \assert($request instanceof Notify);
         $payload = $this->api->verify($request->body, $request->header('X-Docuseal-Signature'));
-        $type = (string) ($payload['event_type'] ?? '');
-        $data = (array) ($payload['data'] ?? []);
+        $read = Data::of($payload);
+        $type = $read->text('event_type');
+        $data = Data::of((array) ($payload['data'] ?? []));
         $form = str_starts_with($type, 'form.');
         $request->setResult(new Notification(
             self::EVENTS[$type] ?? Event::OTHER,
             $type,
-            null !== ($reference = $form ? ($data['submission_id'] ?? $data['submission']['id'] ?? null) : ($data['id'] ?? null)) ? (string) $reference : null,
-            $form ? ($data['external_id'] ?? (isset($data['id']) ? (string) $data['id'] : null)) : null,
-            isset($payload['timestamp']) ? new \DateTimeImmutable((string) $payload['timestamp']) : null,
-            $type.'@'.($data['id'] ?? '').'@'.($payload['timestamp'] ?? ''),
+            $form ? ($data->textOrNull('submission_id') ?? $data->data('submission')->textOrNull('id')) : $data->textOrNull('id'),
+            $form ? ($data->textOrNull('external_id') ?? $data->textOrNull('id')) : null,
+            $read->moment('timestamp'),
+            $type.'@'.$data->text('id').'@'.$read->text('timestamp'),
             $payload,
         ));
     }

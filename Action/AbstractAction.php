@@ -6,6 +6,7 @@ use Omnisign\Action\ActionInterface;
 use Omnisign\Action\ApiAwareInterface;
 use Omnisign\Action\ApiAwareTrait;
 use Omnisign\Docuseal\Api;
+use Omnisign\Docuseal\Data;
 use Omnisign\Model\Envelope;
 use Omnisign\Model\SignerState;
 use Omnisign\Model\Status;
@@ -37,27 +38,29 @@ abstract class AbstractAction implements ActionInterface, ApiAwareInterface
             $byId[(string) $state->reference] = $key;
         }
         foreach ($submitters as $submitter) {
-            $key = $submitter['external_id'] ?? null;
-            $key = null !== $key && \in_array($key, array_map(static fn ($s) => $s->key, $envelope->signers), true) ? $key : ($byId[(string) ($submitter['id'] ?? '')] ?? null);
+            $submitter = Data::of($submitter);
+            $key = $submitter->get('external_id');
+            $key = null !== $key && \in_array($key, array_map(static fn ($s) => $s->key, $envelope->signers), true) ? $key : ($byId[$submitter->text('id')] ?? null);
             if (null === $key) {
                 continue;
             }
             $old = $states[$key] ?? new SignerState($key);
-            $link = $submitter['embed_src'] ?? (isset($submitter['slug']) ? $this->api->appUrl.'/s/'.$submitter['slug'] : $old->link);
-            $states[$key] = new SignerState($key, (string) ($submitter['id'] ?? $old->reference), Api::SIGNER_STATUSES[$submitter['status'] ?? ''] ?? $old->status, isset($submitter['completed_at']) ? new \DateTimeImmutable($submitter['completed_at']) : $old->signedAt, $link, null, $old->reason);
+            $slug = $submitter->textOrNull('slug');
+            $link = $submitter->textOrNull('embed_src') ?? (null !== $slug ? $this->api->appUrl.'/s/'.$slug : $old->link);
+            $states[$key] = new SignerState($key, $submitter->textOrNull('id') ?? (string) $old->reference, Api::SIGNER_STATUSES[$submitter->text('status')] ?? $old->status, $submitter->moment('completed_at') ?? $old->signedAt, $link, null, $old->reason);
         }
-        $first = $submitters[0] ?? [];
-        $reference = array_is_list($answer) ? (string) ($first['submission_id'] ?? $envelope->reference) : (string) ($answer['id'] ?? $envelope->reference);
+        $read = Data::of($answer);
+        $reference = (array_is_list($answer) ? Data::of($submitters[0] ?? [])->textOrNull('submission_id') : $read->textOrNull('id')) ?? (string) $envelope->reference;
         $status = array_is_list($answer)
             ? Status::SENT
-            : (isset($answer['archived_at']) ? Status::CANCELED : (Api::STATUSES[$answer['status'] ?? ''] ?? Status::UNKNOWN));
+            : (isset($answer['archived_at']) ? Status::CANCELED : (Api::STATUSES[$read->text('status')] ?? Status::UNKNOWN));
 
         return $envelope->with(
             reference: $reference,
             status: $status,
             states: $states,
-            completedAt: !array_is_list($answer) && isset($answer['completed_at']) ? new \DateTimeImmutable($answer['completed_at']) : null,
-            data: array_is_list($answer) ? ['submitters' => $answer] : $answer,
+            completedAt: array_is_list($answer) ? null : $read->moment('completed_at'),
+            data: array_is_list($answer) ? ['submitters' => $answer] : Data::map($answer),
         );
     }
 }

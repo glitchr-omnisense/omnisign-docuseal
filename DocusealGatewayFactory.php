@@ -59,16 +59,16 @@ final class DocusealGatewayFactory extends GatewayFactory
                 embedded: true,
                 ordered: true,
                 identityCheck: false,
-                thirdParty: null !== $c->get('third_party') && '' !== $c->get('third_party') ? $c->bool('third_party') : (bool) preg_match('~(^|\.)docuseal\.(com|eu|co)$~', (string) parse_url((string) $c['url'], \PHP_URL_HOST)),
+                thirdParty: null !== $c->get('third_party') && '' !== $c->get('third_party') ? $c->bool('third_party') : (bool) preg_match('~(^|\.)docuseal\.(com|eu|co)$~', (string) parse_url(Data::cast($c['url']), \PHP_URL_HOST)),
                 documents: true,
                 templates: true,
                 policy: self::usagePolicy(),
             ),
             'omnisign.api' => function (Config $c): Api {
-                $url = rtrim((string) $c['url'], '/');
+                $url = rtrim(Data::cast($c['url']), '/');
                 $app = $c->get('app_url') ?: (preg_match('~^https://api\.(docuseal\.(?:com|eu))$~', $url, $m) ? 'https://'.$m[1] : preg_replace('~/api$~', '', $url));
 
-                return new Api($this->http ?? HttpClient::create(), (string) $c['api_key'], $url, rtrim((string) $app, '/'), $c->get('webhook_secret') ?: null, (int) $c['webhook_tolerance'], backoff: $c->backoff());
+                return new Api($this->http ?? HttpClient::create(), Data::cast($c['api_key']), $url, rtrim(Data::cast($app), '/'), Data::cast($c->get('webhook_secret')) ?: null, Data::integer($c['webhook_tolerance']), backoff: $c->backoff());
             },
             'omnisign.action.create' => new CreateAction(),
             'omnisign.action.send' => new SendAction(),

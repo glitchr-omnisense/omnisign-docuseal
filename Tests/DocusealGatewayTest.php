@@ -2,6 +2,7 @@
 
 namespace Omnisign\Docuseal\Tests;
 
+use Omnisign\Docuseal\Data;
 use Omnisign\Docuseal\DocusealGatewayFactory;
 use Omnisign\Exception\InvalidConfigException;
 use Omnisign\Exception\InvalidKeyException;
@@ -28,10 +29,13 @@ use Symfony\Component\HttpClient\Response\MockResponse;
  */
 final class DocusealGatewayTest extends TestCase
 {
-    /** @var list<array{string, string, array<string, mixed>}> */
+    /** @var list<array{string, string, array<array-key, mixed>}> */
     private array $calls = [];
 
-    /** @param list<string|MockResponse> $answers */
+    /**
+     * @param list<string|MockResponse> $answers
+     * @param array<string, mixed>      $options
+     */
     private function gateway(array $answers, array $options = []): GatewayInterface
     {
         $http = new MockHttpClient(function (string $method, string $url, array $options) use (&$answers): MockResponse {
@@ -61,9 +65,10 @@ final class DocusealGatewayTest extends TestCase
         $created = $this->gateway(['submissions-create'])->create(self::lease());
 
         self::assertSame(['POST', 'http://localhost:13300/api/submissions'], [$this->calls[0][0], $this->calls[0][1]]);
-        self::assertStringContainsString('X-Auth-Token: ds-api-key', implode("\n", $this->calls[0][2]['headers']));
-        self::assertSame(['template_id' => 1, 'submitters' => [['role' => 'First Party', 'email' => 'camille@erable.example', 'name' => 'Camille Érable', 'external_id' => 'tenant', 'send_email' => false]], 'send_email' => false, 'order' => 'random'], json_decode((string) $this->calls[0][2]['body'], true));
+        self::assertStringContainsString('X-Auth-Token: ds-api-key', implode("\n", Data::texts($this->calls[0][2]['headers'] ?? [])));
+        self::assertSame(['template_id' => 1, 'submitters' => [['role' => 'First Party', 'email' => 'camille@erable.example', 'name' => 'Camille Érable', 'external_id' => 'tenant', 'send_email' => false]], 'send_email' => false, 'order' => 'random'], json_decode(Data::cast($this->calls[0][2]['body'] ?? null), true));
         $tenant = $created->state('tenant');
+        self::assertNotNull($tenant);
         self::assertSame([Status::SENT, '4', SignerStatus::WAITING], [$created->status, $created->reference, $tenant->status]);
         self::assertMatchesRegularExpression('~^http://localhost:13300/s/[A-Za-z0-9]+$~', (string) $tenant->link);
     }
@@ -74,16 +79,16 @@ final class DocusealGatewayTest extends TestCase
         $created = $gateway->create(self::lease());
 
         $pending = $gateway->fetch($created);
-        self::assertSame([Status::SENT, SignerStatus::WAITING], [$pending->status, $pending->state('tenant')->status]);
+        self::assertSame([Status::SENT, SignerStatus::WAITING], [$pending->status, $pending->state('tenant')?->status]);
         $done = $gateway->fetch($created->with(reference: '2', states: ['tenant' => new \Omnisign\Model\SignerState('tenant', '2')]));
-        self::assertSame([Status::COMPLETED, SignerStatus::SIGNED], [$done->status, $done->state('tenant')->status]);
+        self::assertSame([Status::COMPLETED, SignerStatus::SIGNED], [$done->status, $done->state('tenant')?->status]);
 
         $download = $gateway->download($done);
         self::assertSame(['lease.pdf', '%PDF-1.4 signed'], [$download->documents[0]->filename, $download->documents[0]->content]);
         self::assertSame(['audit-log.pdf', '%PDF-1.6 audit'], [$download->evidence?->filename, $download->evidence?->content]);
         $files = array_values(array_filter($this->calls, static fn ($c) => str_contains($c[1], '/file/')));
         self::assertCount(2, $files);
-        self::assertStringContainsString('X-Auth-Token', implode("\n", $files[0][2]['headers'] ?? []), 'the instance\'s own host: the key goes with it');
+        self::assertStringContainsString('X-Auth-Token', implode("\n", Data::texts($files[0][2]['headers'] ?? [])), 'the instance\'s own host: the key goes with it');
 
         self::assertSame(Status::CANCELED, $gateway->fetch($created->with(reference: '3'))->status, 'archived');
     }
@@ -96,8 +101,8 @@ final class DocusealGatewayTest extends TestCase
         self::assertSame(Status::CANCELED, $gateway->cancel($created)->status);
         self::assertSame(['DELETE', 'http://localhost:13300/api/submissions/4'], [$this->calls[1][0], $this->calls[1][1]]);
         $gateway->remind($created);
-        self::assertSame(['PUT', ['send_email' => true]], [$this->calls[2][0], json_decode((string) $this->calls[2][2]['body'], true)]);
-        self::assertSame($created->state('tenant')->link, $gateway->signingUrl($created, 'tenant')->url);
+        self::assertSame(['PUT', ['send_email' => true]], [$this->calls[2][0], json_decode(Data::cast($this->calls[2][2]['body'] ?? null), true)]);
+        self::assertSame($created->state('tenant')?->link, $gateway->signingUrl($created, 'tenant')->url);
     }
 
     public function testDocumentsTakeTheProEditionWhichAnOpenSourceInstanceRefuses(): void
@@ -109,9 +114,9 @@ final class DocusealGatewayTest extends TestCase
         } catch (ProviderException $e) {
             self::assertStringContainsString('This feature is available in Pro Edition', $e->getMessage());
         }
-        $body = json_decode((string) $this->calls[0][2]['body'], true);
+        $body = Data::of(json_decode(Data::cast($this->calls[0][2]['body'] ?? null), true));
         self::assertSame('http://localhost:13300/api/submissions/pdf', $this->calls[0][1]);
-        self::assertSame(['name' => 'bail', 'file' => base64_encode('%PDF'), 'fields' => [['name' => 'signature-tenant-1', 'type' => 'signature', 'role' => 'tenant', 'required' => true, 'areas' => [['x' => 100, 'y' => 600, 'w' => 200, 'h' => 60, 'page' => 1]]]]], $body['documents'][0]);
+        self::assertSame(['name' => 'bail', 'file' => base64_encode('%PDF'), 'fields' => [['name' => 'signature-tenant-1', 'type' => 'signature', 'role' => 'tenant', 'required' => true, 'areas' => [['x' => 100, 'y' => 600, 'w' => 200, 'h' => 60, 'page' => 1]]]]], $body->data('documents')->get(0));
 
         $this->expectException(InvalidConfigException::class);
         $this->gateway([])->create(new Envelope('Nothing', signers: [new Signer('s', 'S', 's@example.org')]));
