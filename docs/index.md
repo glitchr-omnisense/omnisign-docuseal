@@ -47,7 +47,7 @@ and the open-source code itself ([docusealco/docuseal](https://github.com/docuse
 | | |
 |---|---|
 | `Envelope::$template` set | `POST /submissions`: `template_id`, the submitters by **role** (`Signer::$role`; the first may leave it, "First Party"), `external_id` their key - the open-source edition's way |
-| documents and fields | `POST /submissions/pdf`: each document in base64, its fields (`name`, `type`, `role`: the signer's key, `areas`: x, y, w, h, page) - DocuSeal Pro and the cloud; an open-source instance answers 404, "This feature is available in Pro Edition" |
+| documents and fields | `POST /submissions/pdf`: each document in base64, its fields (`name`, `type`, `role`: the signer's key, `areas`: x, y, w, h, page; a statement since omnisign 1.2: a `text` field typed, or a required `checkbox` acknowledged, with `title` the label and `description` the statement - DocuSeal's OpenAPI, `console.docuseal.com/openapi.yml` read 2026-11-11, states no length for either: no limit declared) - DocuSeal Pro and the cloud; an open-source instance answers 404, "This feature is available in Pro Edition" |
 
 DocuSeal sends at creation (e-mails, or nothing when `embedded`): `create()` answers `SENT`, `send()`
 reads the submission back.

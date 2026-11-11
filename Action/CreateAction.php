@@ -7,6 +7,7 @@ use Omnisign\Model\Field;
 use Omnisign\Model\FieldType;
 use Omnisign\Model\Level;
 use Omnisign\Model\Signer;
+use Omnisign\Model\StatementMode;
 use Omnisign\Request\Create;
 use Omnisign\Request\Request;
 
@@ -86,14 +87,18 @@ final class CreateAction extends AbstractAction
     /** @return array<string, mixed> */
     private function field(Field $field): array
     {
+        $mode = $field->mode();
+
         return [
             'name' => $field->label ?? $field->type->value.'-'.$field->signer.'-'.$field->page,
-            'type' => match ($field->type) {
+            // A statement acknowledged: a required checkbox; typed: a text field; either with the statement as its description.
+            'type' => StatementMode::ACKNOWLEDGED === $mode ? 'checkbox' : match ($field->type) {
                 FieldType::MENTION => 'text',
                 default => $field->type->value,
             },
             'role' => $field->signer,
             'required' => true,
+        ] + (null !== $mode ? array_filter(['title' => $field->label, 'description' => $field->statement]) : []) + [
             'areas' => [['x' => $field->x, 'y' => $field->y, 'w' => $field->width ?? 200, 'h' => $field->height ?? 60, 'page' => $field->page]],
         ];
     }

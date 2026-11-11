@@ -16,6 +16,7 @@ use Omnisign\Model\Field;
 use Omnisign\Model\File;
 use Omnisign\Model\Signer;
 use Omnisign\Model\SignerStatus;
+use Omnisign\Model\StatementMode;
 use Omnisign\Model\Status;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -120,6 +121,29 @@ final class DocusealGatewayTest extends TestCase
 
         $this->expectException(InvalidConfigException::class);
         $this->gateway([])->create(new Envelope('Nothing', signers: [new Signer('s', 'S', 's@example.org')]));
+    }
+
+    public function testAStatementIsTypedInATextFieldOrAcknowledgedByARequiredCheckbox(): void
+    {
+        $mention = 'En me portant caution de Camille Érable, dans la limite de 25 000 euros, je m\'engage à payer à sa place.';
+        $capabilities = $this->gateway([])->capabilities();
+        self::assertTrue($capabilities->fits(str_repeat('x', 100000)), 'no length stated in its OpenAPI');
+        self::assertNull($capabilities->statement(StatementMode::ACKNOWLEDGED)?->maxLength);
+
+        try {
+            $this->gateway(['submission-pdf-404:404'])->create(new Envelope('Caution', [new Document('deed', new File('%PDF', 'caution.pdf'))], [new Signer('surety', 'Camille Érable', 'camille@erable.example')], [
+                Field::forStatement('surety', 'deed', $mention, x: 60, y: 300, label: 'Mention de la caution'),
+                Field::forStatement('surety', 'deed', 'J\'ai reçu un exemplaire du bail.', StatementMode::ACKNOWLEDGED, 1, 60, 450, label: 'Reçu du bail'),
+            ]));
+            self::fail();
+        } catch (ProviderException) {
+            self::addToAssertionCount(1);
+        }
+        $fields = Data::of(json_decode(Data::cast($this->calls[0][2]['body'] ?? null), true))->data('documents')->data(0)->get('fields');
+        self::assertSame([
+            ['name' => 'Mention de la caution', 'type' => 'text', 'role' => 'surety', 'required' => true, 'title' => 'Mention de la caution', 'description' => $mention, 'areas' => [['x' => 60, 'y' => 300, 'w' => 200, 'h' => 60, 'page' => 1]]],
+            ['name' => 'Reçu du bail', 'type' => 'checkbox', 'role' => 'surety', 'required' => true, 'title' => 'Reçu du bail', 'description' => 'J\'ai reçu un exemplaire du bail.', 'areas' => [['x' => 60, 'y' => 450, 'w' => 200, 'h' => 60, 'page' => 1]]],
+        ], $fields);
     }
 
     public function testAWebhooksSignatureIsCheckedAsDocusealSignsIt(): void

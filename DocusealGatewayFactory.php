@@ -15,6 +15,8 @@ use Omnisign\Docuseal\Action\SigningUrlAction;
 use Omnisign\GatewayFactory;
 use Omnisign\Model\Capabilities;
 use Omnisign\Model\Level;
+use Omnisign\Model\StatementLimit;
+use Omnisign\Model\StatementMode;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -63,6 +65,7 @@ final class DocusealGatewayFactory extends GatewayFactory
                 documents: true,
                 templates: true,
                 policy: self::usagePolicy(),
+                statements: self::statements(),
             ),
             'omnisign.api' => function (Config $c): Api {
                 $url = rtrim(Data::cast($c['url']), '/');
@@ -79,5 +82,22 @@ final class DocusealGatewayFactory extends GatewayFactory
             'omnisign.action.signing_url' => new SigningUrlAction(),
             'omnisign.action.notify' => static fn (Config $c) => $c->get('webhook_secret') ? new NotifyAction() : null,
         ]);
+    }
+
+    /**
+     * The statements DocuSeal carries, as its OpenAPI says
+     * (console.docuseal.com/openapi.yml, read 2026-11-11): typed in a text
+     * field, or acknowledged by ticking a required checkbox, the statement
+     * as the field's description (Markdown, shown on the signing form). Its
+     * OpenAPI states no length for a field's value or description: no limit
+     * declared. Fields placed by coordinates need DocuSeal Pro.
+     *
+     * @return list<StatementLimit>
+     */
+    public static function statements(): array
+    {
+        $source = 'DocuSeal OpenAPI, console.docuseal.com/openapi.yml, read 2026-11-11: documents[].fields description, no length stated';
+
+        return [new StatementLimit(StatementMode::TYPED, null, StatementLimit::CHARACTERS, $source), new StatementLimit(StatementMode::ACKNOWLEDGED, null, StatementLimit::CHARACTERS, $source)];
     }
 }
