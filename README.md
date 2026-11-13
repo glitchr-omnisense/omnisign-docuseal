@@ -22,6 +22,14 @@ created, signing link, completed, downloaded (signed PDF and audit log), archive
 
 [Documentation](docs/index.md): the options, templates and PDFs, the webhooks, what was verified.
 
+## Install
+
+```sh
+composer require omnisign/docuseal
+```
+
+It brings the family's core, `omnisense/omnisign`, and `omnisense/contracts` with it. **A DocuSeal instance and its API key are needed**: your own (DocuSeal is open source and self-hosted, no third party) or an account at docuseal.com. Without one, the core's README shows a first call on a recorded answer; the tests run on recorded answers.
+
 ## Usage policy
 
 `policy.json`, read on 2026-11-10 in DocuSeal's [API reference](https://www.docuseal.com/docs/api): no
