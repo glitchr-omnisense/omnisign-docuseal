@@ -47,8 +47,8 @@
     "created_by_user": {
         "id": 1,
         "email": "harness@omnisign.example",
-        "first_name": "Marco",
-        "last_name": "Meyer"
+        "first_name": "Alex",
+        "last_name": "Martin"
     },
     "variables": {},
     "submission_events": [],
